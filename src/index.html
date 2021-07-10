@@ -1,79 +1,99 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
-</head>
-<body>
-<div class="container-fluid">
-   <div class="row">
-       <div class="container">
-           <div class="card">
-               <div class="card-header">
-                   <h2>Chat Screen</h2>
-               </div>
-               <div class="card-body" id="chatRoom">
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+      crossorigin="anonymous"
+    />
+  </head>
+  <body>
+    <div class="container-fluid">
+      <div class="row my-5">
+        <div class="col-md-6 m-auto">
+          <div class="card">
+            <div class="card-header">
+              <h2>Chat Screen</h2>
+            </div>
+            <div class="card-body" id="chatRoom"></div>
+            <div class="card-footer">
+              <div class="form-group">
+                <input
+                  type="text"
+                  name="message"
+                  id="message"
+                  class="form-control"
+                  placeholder="Type your message here..."
+                  aria-describedby="helpId"
+                />
+              </div>
+              <div class="form-group mt-2">
+                <button
+                  type="button"
+                  onclick="sendMessage();"
+                  class="btn btn-success"
+                >
+                  send
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+      crossorigin="anonymous"
+    ></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      const socket = io();
 
-               </div>
-               <div class="card-footer">
-                   <div class="form-group">
-                     <input type="text" name="message" id="message" class="form-control" placeholder="Type your message here..." aria-describedby="helpId">
-                   </div>
-                   <div class="form-group mt-2">
-                       <button type="button" onclick="sendMessage();" class="btn btn-success">
-                          send
-                      </button>
-                   </div>
-               </div>
-           </div>
-       </div>
-   </div> 
-</div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
-<script src="/socket.io/socket.io.js"></script>
-<script>
+      const chatRoom = document.getElementById("chatRoom");
+      const messageBody = document.getElementById("message");
 
-const socket = io();
+      socket.on("init", (message) => console.log(message));
 
-const chatRoom  = document.getElementById('chatRoom');
-const messageBody = document.getElementById('message');
+      function sendMessage() {
+        const user = JSON.parse(localStorage.getItem("userdata"));
+        if (user.name === null || user.name === undefined) {
+          return false;
+        }
+        const text = messageBody.value;
+        messageBody.value = "";
+        if (text === "" || text === null) {
+          return false;
+        }
+        socket.emit("sendMessage", { message: text, user: user });
+      }
 
+      socket.on("messages", (data) => {
+        const user = JSON.parse(localStorage.getItem("userdata"));
 
-socket.on('init', (message) => console.log(message));
-
-function sendMessage(){
-const user  = JSON.parse(localStorage.getItem('userdata'));
-if(user.name === null || user.name === undefined){
-    return false;
-}
-const text = messageBody.value;
-messageBody.value = '';
-if(text  === '' || text === null){
-    return false;
-}
-  socket.emit('sendMessage', { message: text, user: user });
-  
-}
-
-socket.on('messages', (data) => {
-const user  = JSON.parse(localStorage.getItem('userdata'));
-if(user.id === data.user.id){
- chatRoom.insertAdjacentHTML('beforeend',`<div>
+        if (user.id === data.user.id) {
+          chatRoom.insertAdjacentHTML(
+            "beforeend",
+            `<div>
     <h4><b> ${data.user.name}</b></h1>
     <p> ${data.message}</p>
-    </div>`); 
-}
-else {
-    chatRoom.insertAdjacentHTML('beforeend',`<div style="text-align:right;">
+    </div>`
+          );
+        } else {
+          chatRoom.insertAdjacentHTML(
+            "beforeend",
+            `<div style="text-align:right;">
     <h4 ><b> ${data.user.name}</b></h1>
     <p > ${data.message}</p>
-    </div>`); 
-}
-  
-});
-</script>
-</body>
+    </div>`
+          );
+        }
+      });
+    </script>
+  </body>
 </html>
